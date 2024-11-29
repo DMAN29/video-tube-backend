@@ -1,50 +1,61 @@
 package com.app.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2TokenValidator;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
-import org.springframework.security.oauth2.jwt.JwtValidators;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.app.service.MyUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig{
+public class SecurityConfig {
 
-	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-	private String issuer;
-	
-	@Value("${auth0.audience}")
-	private String audience;
-	public void configure(HttpSecurity http)throws Exception{
-		http.authorizeRequests()
-			.anyRequest()
-			.authenticated()
-			.and()
-			.sessionManagement()
-			.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-			.and()
-			.cors(Customizer.withDefaults())
-			.oauth2ResourceServer()
-			.jwt();
-	}
-	@Bean
-	JwtDecoder jwtDecoder() {
-		NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuer);
-		
-		OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
-		OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
-		OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer,audienceValidator);
-		
-		jwtDecoder.setJwtValidator(withAudience);
-		return jwtDecoder;
-	}
+    @Autowired
+    private MyUserDetailsService userDetailsService;
+
+    @Autowired
+    private JwtFilter jwtFilter;
+
+    @Autowired
+    private CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(customizer -> customizer.disable())
+            .authorizeRequests(request -> request
+                .requestMatchers("/login", "/register").permitAll()
+                .anyRequest().authenticated())
+            .httpBasic(Customizer.withDefaults())
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)  // Add the JWT filter before UsernamePasswordAuthenticationFilter
+            .exceptionHandling()
+                .authenticationEntryPoint(customAuthenticationEntryPoint); // Apply custom entry point
+
+        return http.build();  // Make sure to call .build() on HttpSecurity instance
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(new BCryptPasswordEncoder(12));
+        provider.setUserDetailsService(userDetailsService);
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 }

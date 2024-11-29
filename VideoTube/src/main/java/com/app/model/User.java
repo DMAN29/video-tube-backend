@@ -1,5 +1,7 @@
 package com.app.model;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -10,7 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Document(value="Value")
+
+@Document
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,10 +26,11 @@ public class User {
 	private String lastName;
 	private String fullName;
 	private String email;
-	private Set<String> subscribedToUsers;
-	private Set<String> subsribers;
-	private List<String> videoHistory;
-	private Set<String> likedVideos;
-	private Set<String> dislikedVideos;
+	private String password;
+	private Set<String> subscribedToUsers = new HashSet<>();
+	private Set<String> subsribers = new HashSet<>();
+	private List<String> videoHistory = new ArrayList<>();
+	private Set<String> likedVideos = new HashSet<>();
+	private Set<String> dislikedVideos = new HashSet<>();
 
 }

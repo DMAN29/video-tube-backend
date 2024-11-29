@@ -10,10 +10,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(value="Video")
 public class Video {
 
 	@Id
@@ -23,7 +23,7 @@ public class Video {
 	
 	private String description;
 	
-	private String userId;
+	private String userEmail;
 	
 	private Integer likes;
 	
