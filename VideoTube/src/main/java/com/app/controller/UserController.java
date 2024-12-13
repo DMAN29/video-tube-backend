@@ -30,4 +30,6 @@ public class UserController {
 	public LoginResponse login(@RequestBody User user) throws UserException {
 		return userService.verifyUser(user);
 	}
+	
+	
 }

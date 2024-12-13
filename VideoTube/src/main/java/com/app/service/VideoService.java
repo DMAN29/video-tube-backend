@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.app.Dto.VideoDto;
+import com.app.exception.UserException;
+import com.app.model.User;
 import com.app.model.Video;
 import com.app.repository.VideoRepository;
 import com.app.response.UploadVideoResponse;
@@ -12,20 +14,25 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class VideoService {
+public class VideoService{
 
 	private final S3Service s3Service;
 	
 	private final VideoRepository videoRepository;
 	
-	public UploadVideoResponse uploadVideo(MultipartFile multipartFile) {
+	private final UserService userService;
+	
+	public UploadVideoResponse uploadVideo(MultipartFile multipartFile,String jwt) throws UserException {
+		User user = userService.findUserByJwt(jwt);
+		
 		String videoUrl = s3Service.uploadFile(multipartFile);
 		
 		var video = new Video();
 		video.setVideoUrl(videoUrl);
+		video.setUserEmail(user.getEmail());
 		
 		var savedVideo = videoRepository.save(video);
-		
+		System.out.println(savedVideo);
 		return new UploadVideoResponse(savedVideo.getVideoUrl(),savedVideo.getId());
 	}
 	public Video findById(String id) {
@@ -65,6 +72,7 @@ public class VideoService {
 		videoDto.setId(savedVideo.getId());
 		videoDto.setTitle(savedVideo.getTitle());
 		videoDto.setTags(savedVideo.getTags());
+		videoDto.setUserEmail(savedVideo.getUserEmail());
 		videoDto.setDescription(savedVideo.getDescription());
 		videoDto.setVideoStatus(savedVideo.getVideoStatus());
 		return videoDto;

@@ -50,8 +50,20 @@ public class UserService {
 			LoginResponse response = new LoginResponse(user.getEmail(),jwtService.generateToken(user.getEmail()),200);
 			return response;
 		}
-		System.out.println("hlo");
 		throw new UserException("Wrong Credintials");
+	}
+	
+	public User findUserByJwt(String jwt) throws UserException {
+		if (jwt.startsWith("Bearer ")) {
+	        jwt = jwt.substring(7);
+	    }
+		String email= jwtService.extractUserName(jwt);
+		Optional<User> user = userRepository.findByEmail(email);
+		if(user.isPresent()) {
+			return user.get();
+		}
+		throw new UserException("User with Email not found");
+		
 	}
 	
 }

@@ -32,18 +32,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(customizer -> customizer.disable())
+        http.csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults()) // Enable CORS
             .authorizeRequests(request -> request
                 .requestMatchers("/login", "/register").permitAll()
                 .anyRequest().authenticated())
             .httpBasic(Customizer.withDefaults())
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)  // Add the JWT filter before UsernamePasswordAuthenticationFilter
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling()
-                .authenticationEntryPoint(customAuthenticationEntryPoint); // Apply custom entry point
-
-        return http.build();  // Make sure to call .build() on HttpSecurity instance
+                .authenticationEntryPoint(customAuthenticationEntryPoint);
+        return http.build();
     }
 
     @Bean

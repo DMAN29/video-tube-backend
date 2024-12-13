@@ -27,4 +27,6 @@ public class VideoDto {
 	
 	private String thumbnailUrl;
 	
+	private String userEmail;
+	
 }
